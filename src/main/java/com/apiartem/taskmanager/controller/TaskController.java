@@ -2,8 +2,15 @@ package com.apiartem.taskmanager.controller;
 
 import com.apiartem.taskmanager.dto.TaskRequest;
 import com.apiartem.taskmanager.dto.TaskResponse;
+import com.apiartem.taskmanager.dto.UpdateStatusRequest;
+import com.apiartem.taskmanager.model.TaskPriority;
+import com.apiartem.taskmanager.model.TaskStatus;
 import com.apiartem.taskmanager.service.TaskService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -16,24 +23,39 @@ public class TaskController {
     }
 
     @PostMapping
-    public TaskResponse createTask(@RequestBody TaskRequest request) {
-        return taskService.createTask(request);
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskService.createTask(request));
     }
+
     @GetMapping
-    public List<TaskResponse> getAllTasks() {
-        return taskService.getAllTasks();
+    public ResponseEntity<List<TaskResponse>> getAllTasks(@RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority) {
+        return ResponseEntity.ok(taskService.getTasksByFilter(status, priority));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<TaskResponse>> searchTasks(@RequestParam String keyword) {
+        return ResponseEntity.ok(taskService.searchTasks(keyword));
+    }
+
     @GetMapping("/{id}")
-    public TaskResponse getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id);
+    public ResponseEntity<TaskResponse> getTaskById(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
+
     @PutMapping("/{id}")
-    public TaskResponse updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
-        return taskService.updateTask(id, request);
+    public ResponseEntity<TaskResponse> updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
+        return ResponseEntity.ok(taskService.updateTask(id, request));
     }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<TaskResponse> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
+        return ResponseEntity.ok(taskService.updateStatus(id, request.getStatus()));
+    }
+
     @DeleteMapping("/{id}")
-    public String deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
-        return "Task deleted successfully";
+        return ResponseEntity.noContent().build();
     }
 }
